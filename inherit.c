@@ -77,22 +77,26 @@ void CLASS_METHOD_DEF(inherit, resetX) {
 	this->x = 5;
 }
 
+#define ADD_CLASS_FUNC(TYPE, FUNC) add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(TYPE, FUNC), CLASS_METHOD_NAME_STR(TYPE, FUNC)))
+
 /* construct a vtable for the base function */
 void* base_construct(CLASS(base)* this) {
-	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(base, setX), CLASS_METHOD_NAME_STR(base, setX)));
-	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(base, resetX), CLASS_METHOD_NAME_STR(base, resetX)));
-	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(base, getX), CLASS_METHOD_NAME_STR(base, getX)));
+	ADD_CLASS_FUNC(base, setX);
+	ADD_CLASS_FUNC(base, resetX);
+	ADD_CLASS_FUNC(base, getX);
 
 	this->x = 10;
 
 	return this;
 }
 
+#define ADD_CLASS_INHERIT(TYPE, BASE) BASE##_construct(&(this->BASE)); add_node(&(this->vtable), new_vtable_node(this->BASE.vtable))
+
 /* construct a vtable for the inherited function */
 void* inherit_construct(CLASS(inherit)* this) {
 	base_construct(&(this->base));
-	add_node(&(this->vtable), new_vtable_node(this->base.vtable));
-	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(inherit, resetX), CLASS_METHOD_NAME_STR(inherit, resetX)));
+	ADD_CLASS_INHERIT(inherit, base);
+	ADD_CLASS_FUNC(inherit, resetX);
 
 	this->x = 5;
 
