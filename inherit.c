@@ -41,6 +41,8 @@ CLASS(inherit) {
 	 */
 	/* the second vtable */
 
+	CLASS(base) base;
+
 	void* vtable;
 
 	/* the same data variable */
@@ -76,44 +78,29 @@ void CLASS_METHOD_DEF(inherit, resetX) {
 }
 
 /* construct a vtable for the base function */
-void* base_vtable_construct() {
-	void* root;
-	add_node(&root, new_func_node(CLASS_METHOD_NAME(base, setX), CLASS_METHOD_NAME_STR(base, setX)));
-	add_node(&root, new_func_node(CLASS_METHOD_NAME(base, resetX), CLASS_METHOD_NAME_STR(base, resetX)));
-	add_node(&root, new_func_node(CLASS_METHOD_NAME(base, getX), CLASS_METHOD_NAME_STR(base, getX)));
-	return root;
+void* base_construct(CLASS(base)* this) {
+	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(base, setX), CLASS_METHOD_NAME_STR(base, setX)));
+	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(base, resetX), CLASS_METHOD_NAME_STR(base, resetX)));
+	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(base, getX), CLASS_METHOD_NAME_STR(base, getX)));
+
+	this->x = 10;
+
+	return this;
 }
 
 /* construct a vtable for the inherited function */
-void* inherit_vtable_construct() {
-	void* root;
-	add_node(&root, new_vtable_node(base_vtable_construct()));
-	add_node(&root, new_func_node(CLASS_METHOD_NAME(inherit, resetX), CLASS_METHOD_NAME_STR(inherit, resetX)));
-	return root;
-}
+void* inherit_construct(CLASS(inherit)* this) {
+	base_construct(&(this->base));
+	add_node(&(this->vtable), new_vtable_node(this->base.vtable));
+	add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(inherit, resetX), CLASS_METHOD_NAME_STR(inherit, resetX)));
 
-/* the base class constructor */
-CLASS_INIT_DEF(base) {
-	/*CLASS_INIT_BEGIN(test);*/
-	this->x = 10;
+	this->x = 5;
 
-	/*CLASS_METHOD_INIT(test, setX);*/
-	/*CLASS_METHOD_INIT(test, resetX);*/
-	/*CLASS_INIT_END();*/
+	return this;
 }
 
 int main(int argc, char* argv[]) {
-	/*CLASS(test) a = CONSTRUCT(test);*/
-	/*CLASS(test)* b = NEW(test);*/
-
-	/*CLASS_CALL(a, setX, void, 1);*/
-	/*CLASS_CALL(*b, setX, void, 2);*/
-
-	/*printf("%d, %d\n", a.x, b->x);*/
-
-	/*CLASS_CALL(a, resetX, void);*/
-
-	/*printf("%d, %d\n", a.x, b->x);*/
-
-	/*DELETE(b);*/
+	/* allocate a base and an inherit class */
+	CLASS(base)* b = base_construct((CLASS(base)*)malloc(sizeof(*b)));
+	CLASS(inherit)* i = inherit_construct((CLASS(inherit)*)malloc(sizeof(*i)));
 }
