@@ -16,7 +16,6 @@
 
 /* Macros for referencing class methods */
 #define CLASS_METHOD_NAME(TYPE, METHOD) TYPE##_##METHOD##_def
-#define CLASS_METHOD_NAME_STR(TYPE, METHOD) #TYPE "_" #METHOD "_def"
 #define CLASS_METHOD_DEF(TYPE, METHOD, ...) TYPE##_##METHOD##_def(CLASS(TYPE)* this, ##__VA_ARGS__)
 
 /* Macros to define the constructor */
@@ -30,7 +29,7 @@
 #define CLASS_CALL(X, METHOD, ...) (X).vtable->METHOD(&(X), ##__VA_ARGS__)
 
 /* Macros to create and destroy classes */
-#define NEW(TYPE) CLASS_INIT(TYPE)((CLASS(TYPE)*)malloc(sizeof(CLASS(TYPE)))) 
+#define NEW(TYPE) CLASS_CONSTRUCT_NAME(TYPE)((CLASS(TYPE)*)malloc(sizeof(CLASS(TYPE)))) 
 #define CONSTRUCT(TYPE) *NEW(TYPE)
 #define DELETE(X) free((X)->vtable); free(X)
 

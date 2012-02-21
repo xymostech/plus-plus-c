@@ -39,14 +39,15 @@ CLASS(inherit) {
 	/* Methods:
 	 * void resetX() {this->x = 5;}
 	 */
-	/* the second vtable */
 
-	CLASS(base) base;
-
-	void* vtable;
+	/* the vtable of the base */
+	void* base_vtable;
 
 	/* the same data variable */
 	int x;
+
+	/* the inherit vtable */
+	void* vtable;
 
 	/* I need to come up with a way for the data variables
 	 * from base classes are automatically accessible from
@@ -77,10 +78,12 @@ void CLASS_METHOD_DEF(inherit, resetX) {
 	this->x = 5;
 }
 
-#define ADD_CLASS_FUNC(TYPE, FUNC) add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(TYPE, FUNC), CLASS_METHOD_NAME_STR(TYPE, FUNC)))
+#define ADD_CLASS_FUNC(TYPE, FUNC) add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(TYPE, FUNC), #FUNC))
 
-/* construct a vtable for the base function */
-void* base_construct(CLASS(base)* this) {
+#define CLASS_CONSTRUCT_NAME(TYPE) TYPE##_construct
+#define CLASS_CONSTRUCT(TYPE) void* CLASS_CONSTRUCT_NAME(TYPE)(CLASS(TYPE)* this)
+
+CLASS_CONSTRUCT(base) {
 	ADD_CLASS_FUNC(base, setX);
 	ADD_CLASS_FUNC(base, resetX);
 	ADD_CLASS_FUNC(base, getX);
@@ -90,11 +93,9 @@ void* base_construct(CLASS(base)* this) {
 	return this;
 }
 
-#define ADD_CLASS_INHERIT(TYPE, BASE) BASE##_construct(&(this->BASE)); add_node(&(this->vtable), new_vtable_node(this->BASE.vtable))
+#define ADD_CLASS_INHERIT(TYPE, BASE) BASE##_construct((CLASS(BASE)*)&(this->BASE##_vtable)); add_node(&(this->vtable), new_vtable_node(this->BASE##_vtable))
 
-/* construct a vtable for the inherited function */
-void* inherit_construct(CLASS(inherit)* this) {
-	base_construct(&(this->base));
+CLASS_CONSTRUCT(inherit) {
 	ADD_CLASS_INHERIT(inherit, base);
 	ADD_CLASS_FUNC(inherit, resetX);
 
@@ -103,8 +104,25 @@ void* inherit_construct(CLASS(inherit)* this) {
 	return this;
 }
 
+#define FUNC_CALL(X, RETURN, FUNC, ...) ((typeof(RETURN) (*) ())find_func((X)->vtable,str_hash(#FUNC)))((X), ##__VA_ARGS__)
+
 int main(int argc, char* argv[]) {
 	/* allocate a base and an inherit class */
-	CLASS(base)* b = base_construct((CLASS(base)*)malloc(sizeof(*b)));
-	CLASS(inherit)* i = inherit_construct((CLASS(inherit)*)malloc(sizeof(*i)));
+	CLASS(base)* b = NEW(base);
+	CLASS(inherit)* i = NEW(inherit);
+
+	FUNC_CALL(b, void, setX, 2);
+	FUNC_CALL(i, void, setX, 2);
+
+	printf("%d %d\n", b->x, i->x);
+
+	FUNC_CALL(b, void, resetX);
+	FUNC_CALL(i, void, resetX);
+
+	printf("%d %d\n", b->x, i->x);
+
+	int c = FUNC_CALL(b, int, getX);
+	int d = FUNC_CALL(i, int, getX);
+
+	printf("%d %d\n", c, d);
 }
