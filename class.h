@@ -9,26 +9,21 @@
 /* Class keyword */
 #define CLASS(TYPE) struct TYPE
 
-/* Macros for initializing class methods */
-#define CLASS_METHODS_START(TYPE) struct TYPE##_vtable {
-#define CLASS_METHOD(TYPE, METHOD, ...) (* METHOD )(CLASS(TYPE)*, ##__VA_ARGS__)
-#define CLASS_METHODS_END() } *vtable
-
 /* Macros for referencing class methods */
 #define CLASS_METHOD_NAME(TYPE, METHOD) TYPE##_##METHOD##_def
 #define CLASS_METHOD_DEF(TYPE, METHOD, ...) TYPE##_##METHOD##_def(CLASS(TYPE)* this, ##__VA_ARGS__)
 
 /* Macros to define the constructor */
-#define CLASS_INIT(TYPE) TYPE##_init
-#define CLASS_INIT_DEF(TYPE, ...) CLASS(TYPE)* CLASS_INIT(TYPE)(CLASS(TYPE)* this, ##__VA_ARGS__)
-#define CLASS_INIT_BEGIN(TYPE) this->vtable = malloc(sizeof(struct TYPE##_vtable))
-#define CLASS_INIT_END() return this
-#define CLASS_METHOD_INIT(TYPE, METHOD) this->vtable->METHOD = TYPE##_##METHOD##_def
+#define CLASS_CONSTRUCT_NAME(TYPE) TYPE##_construct
+#define CLASS_CONSTRUCT(TYPE) void* CLASS_CONSTRUCT_NAME(TYPE)(CLASS(TYPE)* this)
+#define CLASS_CONSTRUCT_END() return this
 
-#define FUNC_CALL(X, RETURN, FUNC, ...) ((typeof(RETURN) (*) ())find_func((X)->vtable,str_hash(#FUNC)))((X), ##__VA_ARGS__)
+/* Macros to add functions and inheritance to class constructors */
+#define ADD_CLASS_INHERIT(TYPE, BASE) CLASS_CONSTRUCT_NAME(BASE)((CLASS(BASE)*)&(this->BASE##_vtable)); add_node_end(&(this->vtable), new_vtable_node(this->BASE##_vtable))
+#define ADD_CLASS_FUNC(TYPE, FUNC) add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(TYPE, FUNC), #FUNC))
 
 /* Macro to call functions of a class on an instance */
-#define CLASS_CALL(X, METHOD, ...) (X).vtable->METHOD(&(X), ##__VA_ARGS__)
+#define CLASS_FUNC_CALL(X, RETURN, FUNC, ...) ((typeof(RETURN) (*) ())find_func((X)->vtable,str_hash(#FUNC)))((X), ##__VA_ARGS__)
 
 /* Macros to create and destroy classes */
 #define NEW(TYPE) CLASS_CONSTRUCT_NAME(TYPE)((CLASS(TYPE)*)malloc(sizeof(CLASS(TYPE)))) 
