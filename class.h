@@ -25,6 +25,8 @@
 #define CLASS_INIT_END() return this
 #define CLASS_METHOD_INIT(TYPE, METHOD) this->vtable->METHOD = TYPE##_##METHOD##_def
 
+#define FUNC_CALL(X, RETURN, FUNC, ...) ((typeof(RETURN) (*) ())find_func((X)->vtable,str_hash(#FUNC)))((X), ##__VA_ARGS__)
+
 /* Macro to call functions of a class on an instance */
 #define CLASS_CALL(X, METHOD, ...) (X).vtable->METHOD(&(X), ##__VA_ARGS__)
 
@@ -89,6 +91,16 @@ void* new_vtable_node(void* funcs) {
 void add_node(void** root, struct general_node* add) {
 	add->next = *root;
 	*root = add;
+}
+
+void add_node_end(void** root, struct general_node* add) {
+	if(!(*root)) {
+		*root = add;
+	} else {
+		struct general_node* node = *root;
+		while(node->next) node = node->next;
+		node->next = add;
+	}
 }
 
 void* find_func(struct general_node* root, unsigned hash) {

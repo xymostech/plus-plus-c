@@ -93,7 +93,7 @@ CLASS_CONSTRUCT(base) {
 	return this;
 }
 
-#define ADD_CLASS_INHERIT(TYPE, BASE) BASE##_construct((CLASS(BASE)*)&(this->BASE##_vtable)); add_node(&(this->vtable), new_vtable_node(this->BASE##_vtable))
+#define ADD_CLASS_INHERIT(TYPE, BASE) BASE##_construct((CLASS(BASE)*)&(this->BASE##_vtable)); add_node_end(&(this->vtable), new_vtable_node(this->BASE##_vtable))
 
 CLASS_CONSTRUCT(inherit) {
 	ADD_CLASS_INHERIT(inherit, base);
