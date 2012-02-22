@@ -1,5 +1,5 @@
 .PHONY: all
-all: test returns inherit
+all: returns inherit
 
 %: %.c class.h
 	gcc -g -o $@ $<

@@ -1,4 +1,3 @@
 inherit
 returns
-test
 *.dSYM/
