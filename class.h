@@ -1,3 +1,6 @@
+#ifndef CLASS_H
+#define CLASS_H
+
 #include <stdlib.h>
 
 /* Class.h
@@ -19,11 +22,11 @@
 #define CLASS_CONSTRUCT_END() return this
 
 /* Macros to add functions and inheritance to class constructors */
-#define ADD_CLASS_INHERIT(TYPE, BASE) CLASS_CONSTRUCT_NAME(BASE)((CLASS(BASE)*)&(this->BASE##_vtable)); add_node_end(&(this->vtable), new_vtable_node(this->BASE##_vtable))
+#define ADD_CLASS_INHERIT(TYPE, BASE) CLASS_CONSTRUCT_NAME(BASE)((CLASS(BASE)*)&(this->BASE##_vtable)); add_node_end(&(this->vtable), new_vtable_node(this->BASE##_vtable, &(this->BASE##_vtable)))
 #define ADD_CLASS_FUNC(TYPE, FUNC) add_node(&(this->vtable), new_func_node(CLASS_METHOD_NAME(TYPE, FUNC), #FUNC))
 
 /* Macro to call functions of a class on an instance */
-#define CLASS_FUNC_CALL(X, RETURN, FUNC, ...) ((typeof(RETURN) (*) ())find_func((X)->vtable,str_hash(#FUNC)))((X), ##__VA_ARGS__)
+#define CLASS_FUNC_CALL(X, RETURN, FUNC, ...) ((typeof(RETURN) (*) ())find_func((X)->vtable,str_hash(#FUNC),&base_pos,(X)))(base_pos, ##__VA_ARGS__)
 
 /* Macros to create and destroy classes */
 #define NEW(TYPE) CLASS_CONSTRUCT_NAME(TYPE)((CLASS(TYPE)*)malloc(sizeof(CLASS(TYPE)))) 
@@ -62,6 +65,7 @@ struct vtable_node {
 	int type;
 	void* next;
 	void* funcs;
+	void* pos;
 };
 
 /* functions for creating new func nodes,
@@ -76,10 +80,11 @@ void* new_func_node(void* func, char* func_name) {
 	return node;
 }
 
-void* new_vtable_node(void* funcs) {
+void* new_vtable_node(void* funcs, void* pos) {
 	struct vtable_node* node = malloc(sizeof(*node));
 	node->type = VTABLE_NODE_TYPE;
 	node->funcs = funcs;
+	node->pos = pos;
 	return node;
 }
 
@@ -98,15 +103,16 @@ void add_node_end(void** root, struct general_node* add) {
 	}
 }
 
-void* find_func(struct general_node* root, unsigned hash) {
+void* find_func(struct general_node* root, unsigned hash, void** pos, void* curr_pos) {
 	void* ret;
 	while(root) {
 		if(root->type == FUNC_NODE_TYPE) {
 			if(((struct func_node*)root)->name_hash == hash) {
+				*pos = curr_pos;
 				return ((struct func_node*)root)->func;
 			}
 		} else {
-			if(ret = find_func(((struct vtable_node*)root)->funcs, hash)) {
+			if(ret = find_func(((struct vtable_node*)root)->funcs, hash, pos, ((struct vtable_node*)root)->pos)) {
 				return ret;
 			}
 		}
@@ -114,3 +120,7 @@ void* find_func(struct general_node* root, unsigned hash) {
 	}
 	return NULL;
 }
+
+void* base_pos;
+
+#endif

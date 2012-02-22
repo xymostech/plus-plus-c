@@ -34,6 +34,38 @@ int CLASS_METHOD_DEF(base, getX) {
 	return this->x;
 }
 
+/* constructor for base */
+CLASS_CONSTRUCT(base) {
+	ADD_CLASS_FUNC(base, setX);
+	ADD_CLASS_FUNC(base, resetX);
+	ADD_CLASS_FUNC(base, getX);
+
+	this->x = 10;
+
+	CLASS_CONSTRUCT_END();
+}
+
+/* the second base class of inherit */
+CLASS(base2) {
+	void* vtable;
+
+	int y;
+};
+
+void CLASS_METHOD_DEF(base2, setY, int y) {
+	this->y = y;
+}
+
+CLASS_CONSTRUCT(base2) {
+	ADD_CLASS_FUNC(base2, setY);
+	
+	this->y = 15;
+
+	CLASS_CONSTRUCT_END();
+}
+
+#define INHERIT(TYPE) void* TYPE##_vtable;
+
 /* the inherited class */
 CLASS(inherit) {
 	/* Methods:
@@ -41,10 +73,14 @@ CLASS(inherit) {
 	 */
 
 	/* the vtable of the base */
-	void* base_vtable;
+	INHERIT(base);
 
 	/* the same data variable */
 	int x;
+
+	INHERIT(base2);
+
+	int y;
 
 	/* the inherit vtable */
 	void* vtable;
@@ -78,18 +114,9 @@ void CLASS_METHOD_DEF(inherit, resetX) {
 	this->x = 5;
 }
 
-CLASS_CONSTRUCT(base) {
-	ADD_CLASS_FUNC(base, setX);
-	ADD_CLASS_FUNC(base, resetX);
-	ADD_CLASS_FUNC(base, getX);
-
-	this->x = 10;
-
-	CLASS_CONSTRUCT_END();
-}
-
 CLASS_CONSTRUCT(inherit) {
 	ADD_CLASS_INHERIT(inherit, base);
+	ADD_CLASS_INHERIT(inherit, base2);
 	ADD_CLASS_FUNC(inherit, resetX);
 
 	this->x = 5;
@@ -103,9 +130,9 @@ int main(int argc, char* argv[]) {
 	CLASS(inherit)* i = NEW(inherit);
 
 	CLASS_FUNC_CALL(b, void, setX, 2);
-	CLASS_FUNC_CALL(i, void, setX, 2);
+	CLASS_FUNC_CALL(i, void, setY, 2);
 
-	printf("%d %d\n", b->x, i->x);
+	printf("%d %d %d\n", b->x, i->x, i->y);
 
 	CLASS_FUNC_CALL(b, void, resetX);
 	CLASS_FUNC_CALL(i, void, resetX);
